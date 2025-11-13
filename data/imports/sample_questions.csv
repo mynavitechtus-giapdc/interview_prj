@@ -1,0 +1,3 @@
+name,answer,category,level
+"Bạn có thể giải thích sự khác biệt giữa var, let và const trong JavaScript không?","var có function scope và có hoisting, let có block scope không hoisting, const cũng block scope nhưng không thể reassign.",technical,junior
+"Microservices và Monolithic architecture khác nhau như thế nào?","Monolithic là single codebase, Microservices chia thành services nhỏ độc lập. Microservices dễ scale, phát triển parallel nhưng phức tạp hơn.",technical,senior

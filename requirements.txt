@@ -1,0 +1,31 @@
+# LangChain core
+langchain==0.1.20
+langchain-google-genai
+langchain-community==0.0.38
+langchain-huggingface
+sentence_transformers
+
+# Vector stores
+faiss-cpu
+chromadb==0.4.22
+
+# OpenAI
+openai==1.6.1
+
+# Utilities
+python-dotenv==1.0.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Database
+sqlalchemy==2.0.23
+psycopg2-binary
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+
+# Others
+pandas
+numpy
+rich
