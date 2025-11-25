@@ -14,30 +14,30 @@ class SummarizeChain:
         )
         
         self.template = """
-            You are an expert in standardizing interview questions.
+            Bạn là chuyên gia chuẩn hóa câu hỏi phỏng vấn.
 
-            Original Question: {question}
+            Câu hỏi gốc: {question}
 
-            Task: Summarize the question into a CONCISE, CLEAR format, preserving the core meaning.
+            Nhiệm vụ: Tóm tắt câu hỏi thành định dạng NGẮN GỌN, RÕ RÀNG, giữ nguyên ý nghĩa cốt lõi.
 
-            Rules:
-            - Eliminate filler words and redundant phrases.
-            - Retain important technical keywords.
-            - Convert the input into a standard question format.
-            - Do not introduce new information.
-            - **STRICTLY MAX 1 sentence, around 15-20 words.**
+            Quy tắc:
+            - Loại bỏ từ thừa và cụm từ dài dòng.
+            - Giữ lại các từ khóa kỹ thuật quan trọng.
+            - Chuyển đổi thành định dạng câu hỏi chuẩn.
+            - Không thêm thông tin mới.
+            - **NGHIÊM NGẶT TỐI ĐA 1 câu, khoảng 15-20 từ.**
 
-            Examples:
-            Input: "I wanna ask, like, what's the difference between var, let, and const in JavaScript, please?"
-            Output: "What is the difference between var, let, and const in JavaScript?"
+            Ví dụ:
+            Input: "Em muốn hỏi là, kiểu như, sự khác nhau giữa var, let và const trong JavaScript là gì ạ?"
+            Output: "Sự khác nhau giữa var, let và const trong JavaScript là gì?"
 
-            Input: "Could you possibly explain to me the main differences between REST API and GraphQL?"
-            Output: "How do REST API and GraphQL differ?"
+            Input: "Anh có thể giải thích cho em về sự khác biệt chính giữa REST API và GraphQL được không ạ?"
+            Output: "REST API và GraphQL khác nhau như thế nào?"
 
-            Input: "What is docker and when should we use it in production?"
-            Output: "What is Docker and when should it be used in production?"
+            Input: "Docker là gì và khi nào chúng ta nên sử dụng nó trong môi trường production?"
+            Output: "Docker là gì và khi nào nên sử dụng trong production?"
 
-            Standardized Question:"""
+            Câu hỏi chuẩn hóa:"""
         
         self.prompt = PromptTemplate(
             template=self.template,

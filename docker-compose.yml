@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector
+  db:
+    image: pgvector/pgvector:pg15
+    container_name: postgres-interview
+    environment:
+      POSTGRES_USER: interview_admin
+      POSTGRES_PASSWORD: interview123
+      POSTGRES_DB: interview_system
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U interview_admin -d interview_system"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Server (includes webhook endpoints)
+  api:
+    build: .
+    container_name: interview-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+      - ./data:/app/data
+    environment:
+      # Database
+      DATABASE_URL: postgresql://interview_admin:interview123@db:5432/interview_system
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: interview_system
+      DB_USER: interview_admin
+      DB_PASSWORD: interview123
+      
+      # AI (set these in .env file)
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-pro}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+      
+      # Webhook settings
+      WEBHOOK_PORT: ${WEBHOOK_PORT:-8000}
+      GOOGLE_DRIVE_FOLDER_ID: ${GOOGLE_DRIVE_FOLDER_ID}
+      
+      # Settings
+      SIMILARITY_THRESHOLD: ${SIMILARITY_THRESHOLD:-0.8}
+      PASSING_SCORE: ${PASSING_SCORE:-6.0}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

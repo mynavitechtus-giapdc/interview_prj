@@ -9,9 +9,6 @@ sentence_transformers
 faiss-cpu
 chromadb==0.4.22
 
-# OpenAI
-openai==1.6.1
-
 # Utilities
 python-dotenv==1.0.0
 pydantic==2.5.3
@@ -20,6 +17,7 @@ pydantic-settings==2.1.0
 # Database
 sqlalchemy==2.0.23
 psycopg2-binary
+pgvector
 
 # Testing
 pytest==7.4.3
@@ -35,7 +33,3 @@ google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
 google-cloud-speech
-
-# Web Framework
-fastapi
-uvicorn[standard]
