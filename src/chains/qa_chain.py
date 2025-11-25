@@ -13,21 +13,21 @@ class QAChain:
         )
         
         self.template = """
-            You are a technical interview expert tasked with creating a concise reference answer for a given interview question.
+            Bạn là chuyên gia phỏng vấn kỹ thuật, nhiệm vụ của bạn là tạo câu trả lời tham khảo ngắn gọn cho câu hỏi phỏng vấn.
 
-            Interview Question: {question}
+            Câu hỏi phỏng vấn: {question}
 
-            Context from similar questions:
+            Ngữ cảnh từ các câu hỏi tương tự:
             {context}
 
-            Generate a reference answer for the question above.
+            Hãy tạo câu trả lời tham khảo cho câu hỏi trên.
             
-            [STRICT RULES]:
-            1. **The answer must be brief, directly to the point, and formatted using Markdown bullet points.**
-            2. **Do NOT exceed 150 words** in total. Focus only on the most essential technical points.
-            3. Must be technically accurate and easy for an interviewer to grade.
+            [QUY TẮC NGHIÊM NGẶT]:
+            1. **Câu trả lời phải ngắn gọn, đi thẳng vào vấn đề, và được định dạng bằng bullet points Markdown.**
+            2. **KHÔNG vượt quá 150 từ** tổng cộng. Chỉ tập trung vào các điểm kỹ thuật quan trọng nhất.
+            3. Phải chính xác về mặt kỹ thuật và dễ dàng để người phỏng vấn chấm điểm.
 
-            Reference Answer: """
+            Câu trả lời tham khảo: """
         
         self.prompt = PromptTemplate(
             template=self.template,

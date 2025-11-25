@@ -70,7 +70,8 @@ class InterviewDatabase:
     
     def save_interaction(
         self,
-        user_id: str,
+        candidate_id: int,
+        interviewer_id: int,
         question_id: int,
         answer_original: str,
         question_summarized: str = None,
@@ -85,7 +86,8 @@ class InterviewDatabase:
         
         try:
             interaction = UserInteraction(
-                user_id=user_id,
+                candidate_id=candidate_id,
+                interviewer_id=interviewer_id,
                 question_id=question_id,
                 question_summarized=question_summarized,
                 answer_original=answer_original,
@@ -101,7 +103,7 @@ class InterviewDatabase:
             session.commit()
             session.refresh(interaction)
             
-            logger.info(f"Saved interaction #{interaction.id} for user {user_id}")
+            logger.info(f"Saved interaction #{interaction.id} for candidate {candidate_id} with interviewer {interviewer_id}")
             return interaction.id
             
         except Exception as e:
@@ -111,18 +113,18 @@ class InterviewDatabase:
         finally:
             session.close()
     
-    def get_user_interactions(self, user_id: str) -> List[Dict]:
+    def get_user_interactions(self, candidate_id: int) -> List[Dict]:
         session: Session = self.db_manager.get_session()
         
         try:
             interactions = session.query(UserInteraction).filter(
-                UserInteraction.user_id == user_id
+                UserInteraction.candidate_id == candidate_id
             ).order_by(UserInteraction.created_at.desc()).all()
             
             return [
                 {
                     "id": i.id,
-                    "question": i.question.name,
+                    "question": i.question.name if i.question else i.question_summarized,
                     "answer": i.answer_original,
                     "score": i.grading_score,
                     "passed": i.is_passed,
@@ -144,7 +146,7 @@ class InterviewDatabase:
             
             return [
                 {
-                    "question": i.question.name,
+                    "question": i.question.name if i.question else i.question_summarized,
                     "answer": i.answer_original,
                     "score": i.grading_score,
                     "passed": i.is_passed
@@ -160,7 +162,7 @@ class InterviewDatabase:
         try:
             total_questions = session.query(Question).count()
             total_interactions = session.query(UserInteraction).count()
-            total_users = session.query(func.count(func.distinct(UserInteraction.user_id))).scalar()
+            total_users = session.query(func.count(func.distinct(UserInteraction.candidate_id))).scalar()
             passed_count = session.query(UserInteraction).filter(
                 UserInteraction.is_passed == True
             ).count()
@@ -178,17 +180,17 @@ class InterviewDatabase:
         finally:
             session.close()
     
-    def get_user_statistics(self, user_id: str) -> Dict:
+    def get_user_statistics(self, candidate_id: int) -> Dict:
         session: Session = self.db_manager.get_session()
         
         try:
             interactions = session.query(UserInteraction).filter(
-                UserInteraction.user_id == user_id
+                UserInteraction.candidate_id == candidate_id
             ).all()
             
             if not interactions:
                 return {
-                    "user_id": user_id,
+                    "candidate_id": candidate_id,
                     "total_questions": 0,
                     "passed_count": 0,
                     "pass_rate": 0,
@@ -201,7 +203,7 @@ class InterviewDatabase:
             avg_score = sum(scores) / len(scores) if scores else 0
             
             return {
-                "user_id": user_id,
+                "candidate_id": candidate_id,
                 "total_questions": total,
                 "passed_count": passed,
                 "pass_rate": passed / total,

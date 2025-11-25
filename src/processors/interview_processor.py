@@ -2,56 +2,38 @@ from typing import Dict, Optional, Tuple
 import time
 import uuid
 
-from src.embeddings.vector_store import VectorStoreManager
+from src.database.pgvector_search import PgVectorSearch
 from src.chains.grading_chain import GradingChain
 from src.chains.qa_chain import QAChain
 from src.chains.summarize_chain import SummarizeChain
 from src.database.interview_db import InterviewDatabase
+from src.database.user_db import UserDatabase
 from config.settings import settings
 from src.utils.logger import logger
 
 class InterviewProcessor:
 
     def __init__(self):
-        self.vector_store = VectorStoreManager()
+        self.pgvector_search = PgVectorSearch()
         self.grading_chain = GradingChain()
         self.qa_chain = QAChain()
         self.summarize_chain = SummarizeChain()
         self.database = InterviewDatabase()
+        self.user_database = UserDatabase()
         logger.info("Interview processor initialized")
 
     def _search_question_in_vectorstore(self, question_text: str) -> Tuple[Optional[dict], Optional[float]]:
-        similar_docs = self.vector_store.search_with_score(
+        """
+        Search for similar question in pgvector database
+        Only accept questions with similarity >= 80%
+        """
+        matched_question, similarity_score = self.pgvector_search.search_question_with_threshold(
             question_text,
             k=settings.top_k_results
         )
-
-        if not similar_docs:
-            logger.warning("No similar questions found in vector store")
-            return None, None
-
-        best_doc, similarity_score = similar_docs[0]
-
-        # CRITICAL: Check similarity threshold (80%)
-        if similarity_score < settings.similarity_threshold:
-            logger.warning(
-                f"Similarity too low: {similarity_score:.2%} < {settings.similarity_threshold:.2%}\n"
-                f"Query: '{question_text}'\n"
-                f"Best match: '{best_doc.metadata.get('question')}'\n"
-                f"→ Treating as NEW QUESTION"
-            )
-            return None, None  # Trigger re-summarize and generate flow
-
-        result = {
-            'question_id': best_doc.metadata.get("question_id"),
-            'question_text': best_doc.metadata.get("question"),
-            'category': best_doc.metadata.get("category"),
-            'level': best_doc.metadata.get("level")
-        }
-
-        logger.info(f"Found question #{result['question_id']} (similarity: {similarity_score:.2%})")
-        return result, similarity_score
-
+        
+        return matched_question, similarity_score
+    
     def _get_answer_from_db(self, question_id: int) -> Optional[str]:
         try:
             answer = self.database.get_question_answer(question_id)
@@ -66,15 +48,9 @@ class InterviewProcessor:
 
     def _generate_answer_with_llm(self, question_text: str) -> str:
         try:
-            # Get context from similar questions
-            similar_docs = self.vector_store.search_with_score(question_text, k=3)
-
-            context = "\n\n".join([
-                f"Câu hỏi tương tự: {doc.metadata.get('question', '')}\n"
-                f"Câu trả lời: {doc.metadata.get('answer', '')}"
-                for doc, _ in similar_docs if doc.metadata.get('answer')
-            ])
-
+            # Get context from similar questions using pgvector
+            context = self.pgvector_search.get_context_for_generation(question_text, k=3)
+            
             generated_answer = self.qa_chain.generate_answer(question_text, context)
             logger.info("Generated answer using LLM")
             return generated_answer
@@ -94,14 +70,15 @@ class InterviewProcessor:
 
     def process_answer(
         self,
-        user_id: str,
+        candidate_id: int,
+        interviewer_id: int,
         candidate_answer: str,
         question_summarized: str,
         session_id: str = None
     ) -> Dict:
         start_time = time.time()
-        logger.info(f"Processing answer from user {user_id}")
-
+        logger.info(f"Processing answer from candidate {candidate_id} with interviewer {interviewer_id}")
+        
         # Generate session_id if not provided
         if not session_id:
             session_id = str(uuid.uuid4())
@@ -161,8 +138,9 @@ class InterviewProcessor:
             processing_time = int((time.time() - start_time) * 1000)
 
             interaction_id = self.database.save_interaction(
-                user_id=user_id,
-                question_id=None,
+                candidate_id=candidate_id,
+                interviewer_id=interviewer_id,
+                question_id=question_id,
                 answer_original=candidate_answer,
                 question_summarized=question_summarized,
                 final_answer=reference_answer,
@@ -184,6 +162,7 @@ class InterviewProcessor:
             return {
                 "status": "success",
                 "interaction_id": interaction_id,
+                "question_id": question_id,
                 "question_summarized": question_summarized,
                 "question_matched": question_text,
                 "your_answer": candidate_answer,
@@ -203,13 +182,14 @@ class InterviewProcessor:
                 "status": "error",
                 "message": f"Processing failed: {str(e)}"
             }
-
-    def get_user_report(self, user_id: str) -> Dict:
-        stats = self.database.get_user_statistics(user_id)
-        interactions = self.database.get_user_interactions(user_id)
-
+    
+    def get_user_report(self, candidate_id: int) -> Dict:
+        """Get candidate's interview report"""
+        stats = self.database.get_user_statistics(candidate_id)
+        interactions = self.database.get_user_interactions(candidate_id)
+        
         return {
-            "user_id": user_id,
+            "candidate_id": candidate_id,
             "statistics": stats,
             "interactions": interactions
         }
@@ -237,3 +217,6 @@ class InterviewProcessor:
             "average_score": round(avg_score, 2),
             "interactions": interactions
         }
+    
+    def get_or_create_user(self, name: str, role: str) -> int:
+        return self.user_database.get_or_create_user(name, role)

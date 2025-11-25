@@ -13,33 +13,19 @@ Hệ thống tự động xử lý phỏng vấn với các tính năng:
 ## 🎯 INSTALLATION CHECKLIST
 
 ```bash
-# ✅ Step 1: Setup PostgreSQL
-docker run --name postgres-dev \
-  -e POSTGRES_USER=interview_admin \
-  -e POSTGRES_PASSWORD=interview123 \
-  -e POSTGRES_DB=interview_system \
-  -p 5433:5432 \
-  -d postgres:15
-
-# ✅ Step 2: Create virtual environment
-python3.10 -m venv venv
-source venv/bin/activate
-
-# ✅ Step 3: Install dependencies
-pip install -r requirements.txt
-
-# ✅ Step 4: Setup .env
+# ✅ SStep 1: Build Docker images
 cp .env.example .env
-# Edit các biến: GOOGLE_API_KEY, GEMINI_MODEL, EMBEDDING_MODEL, DATABASE_URL
+docker compose build
 
-# ✅ Step 5: Create database
-python -m scripts.create_database
+# ✅ Step 2: Start containers (backend + db)
+docker compose up -d   
 
-# ✅ Step 6: Load mock data
-python -m scripts.setup_database
+# ✅ Step 3: Create database
+docker compose exec interview-api python -m scripts.create_database
 
-# ✅ Step 7: Run application
-python main.py
+# ✅ Step 4: Load mock data
+docker compose exec app python -m scripts.setup_database
+
 ```
 
 ---
@@ -47,15 +33,6 @@ python main.py
 ## 🔍 VERIFICATION COMMANDS
 
 ```bash
-# Check database
-psql -h localhost -U interview_admin -d interview_system -c "SELECT COUNT(*) FROM questions;"
-
-# Check Python packages
-pip list | grep -E "langchain|sqlalchemy|faiss"
-
-# Check vector store
-ls -la data/vectorstore/
-
 # Check logs
 tail -f logs/interview_system.log
 ```

@@ -24,9 +24,9 @@ class Settings(BaseSettings):
     # Interview Settings
     similarity_threshold: float = 0.8
     top_k_results: int = 3
-    pass_threshold: int = 60
-    passing_score: int = 60
-
+    pass_threshold: float = 6.0
+    passing_score: float = 6.0
+    
     # Logging
     log_level: str = "INFO"
 
