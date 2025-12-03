@@ -148,6 +148,7 @@ class InterviewService:
                 questions.append({
                     "question": i.question_summarized or (i.question.name if i.question else "N/A"),
                     "answer": i.answer_original,
+                    "correctAnswer": i.final_answer,
                     "score": i.grading_score,
                     "passed": i.is_passed,
                     "feedback": i.feedback
